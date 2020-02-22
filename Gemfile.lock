@@ -1,23 +1,16 @@
-GIT
-  remote: https://github.com/meh/ruby-mbox.git
-  revision: 82cf262fb9134c3876a27be3e64443603b1c3d51
-  specs:
-    mbox (0.1.0)
-      call-me
-
 GEM
   remote: https://rubygems.org/
   specs:
-    call-me (0.0.2.3)
-      refining
-    refining (0.0.5.5)
+    mail (2.7.1)
+      mini_mime (>= 0.1.1)
+    mini_mime (1.0.2)
     sqlite3 (1.4.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  mbox!
+  mail
   sqlite3 (~> 1.4)
 
 BUNDLED WITH
