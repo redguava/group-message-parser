@@ -15,10 +15,6 @@ module GroupParser
       new(mail, filename)
     end
 
-    def self.save(message)
-      #TODO
-    end
-
     def initialize(mail, filename)
       parse(mail, filename)
     end
@@ -37,14 +33,14 @@ module GroupParser
       else
         # possible parsing error
         permissive_mail_regex = /[a-z0-9!#$%&'*+\/=?^_‘{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_‘{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
-        match = permissive_mail_regex.match(mail.from)
-        self.from_email = match.captures.first if match
+        match = mail.from.scan(permissive_mail_regex)
+        self.from_email = match.last if match.any?
       end
 
       self.subject = mail.subject
 
       body = find_body(mail)
-      self.body = body.to_s.gsub(/\t+/, "\t").gsub(/(\r\n)+/, "\r\n") if body
+      self.body = body.decoded.gsub(/\t+/, "\t").gsub(/(\r\n){3,}/, "\r\n" * 2) if body
 
       id = /\Am\.(.+?\..+)/.match(File.basename(filename))
       self.id = id.captures.first.sub(/\./, '/') if id
