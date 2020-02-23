@@ -7,13 +7,27 @@ class Parser < Thor
 
   def import
     directory = options[:dir]
-    db = options[:db]
+    db_path = options[:db]
 
     target_date = Time.parse('2017-11-20')
     require 'group_parser'
-    GroupParser.parse_messages(directory) do |message|
-      next if message.date < target_date
-      next if message.from.include?('@cliniko.com')
+
+    db = GroupParser::Repository.new(File.absolute_path(db_path, Dir.pwd))
+    db.setup
+
+    GroupParser.parse_messages(directory).each_slice(1000) do |messages|
+      db.with_transaction do
+        messages.each do |message|
+          next if message.date < target_date
+          next if message.from_email.include?('@cliniko.com')
+
+          db.store(message)
+        rescue => e
+          puts message.id
+
+          raise
+        end
+      end
     end
   end
 end
