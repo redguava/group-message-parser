@@ -4,12 +4,26 @@ class Parser < Thor
   desc "import", "Import mail files in DIR to sqlite database DB"
   option :dir, required: true, type: :string, desc: "Directory where mail files can be found"
   option :db, required: false, default: 'messages.db', type: :string, desc: "Filename of output database"
+  option :cutoffdate, required: false, type: :string, desc: "Message cutoff date. Messages older than this will not be imported"
+  option :ignore, required: false, default: '', type: :string, desc: "Comma-separated list of email domains to ignore"
+  option :group, required: false, default: 'default', type: :string, desc: "Name of imported group"
 
   def import
     directory = options[:dir]
     db_path = options[:db]
+    group_name = options[:group]
+    cutoff_date = options[:cutoffdate]
+    ignore = options[:ignore]
 
-    target_date = Time.parse('2017-11-20')
+    if ignore
+      ignore = ignore.split(',').map do |domain|
+        "@#{domain.strip}"
+      end
+    else
+      ignore = []
+    end
+
+    target_date = Time.parse(cutoff_date)
     require 'group_parser'
 
     db = GroupParser::Repository::Message.new(File.absolute_path(db_path, Dir.pwd))
@@ -19,9 +33,11 @@ class Parser < Thor
       db.with_transaction do
         messages.each do |message|
           next if message.date < target_date
-          next if message.from_email.include?('@cliniko.com')
+          ignore.each do |domain|
+            next if message.from_email.include?(domain)
+          end
 
-          db.store(message)
+          db.store(message, group_name)
         rescue => e
           puts message.id
 
